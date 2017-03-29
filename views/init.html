@@ -97,8 +97,6 @@
                 document.querySelector('#outgoing').textContent = JSON.stringify(data);
             });
 
-
-
             //p.on('connect', function () {
             //    console.log('CONNECT');
             //    p.send('whatever' + Math.random());
@@ -107,6 +105,13 @@
             //p.on('data', function (data) {
             //    console.log('data: ' + data);
             //});
+          
+            p.on('stream', function (stream) {
+            // got remote video stream, now let's show it in a video tag
+            var video = document.querySelector('#myvideo')
+            video.src = window.URL.createObjectURL(stream)
+            video.play()
+          })
         }
 
 
@@ -127,13 +132,16 @@
     </button>
     <div id="userlist">           
     </div>
-  
+  <!--
     <form id="myform">
         <textarea id="incoming"></textarea>
         <button type="submit">submit</button>
     </form>
+  -->
     <pre id="outgoing"></pre>
     <!--<script src="bundle.js"></script>-->
+    <video id="myvideo" width="320" height="240" controls>        
+    </video>
 </body>
 
 </html>

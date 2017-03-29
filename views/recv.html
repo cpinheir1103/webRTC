@@ -20,6 +20,7 @@
         */
         var gUsername;
         var gCallername;
+        var p;
         var socket = io();
        
         function register() {
@@ -70,36 +71,46 @@
             });
         }
 
-        // get video/voice stream
-        //navigator.getUserMedia({ video: true, audio: true }, gotMedia, function () { })
+       // get video/voice stream            
+        navigator.getUserMedia = ( navigator.getUserMedia ||
+                                   navigator.webkitGetUserMedia ||
+                                   navigator.mozGetUserMedia ||
+                                   navigator.msGetUserMedia
+                                 );      
+        if (navigator.getUserMedia) {
+          navigator.getUserMedia({ video: true, audio: true }, gotMedia, function () { })
+        } else {
+           console.log("getUserMedia not supported");
+           alert("getUserMedia not supported");
+        }
 
-        var p = new SimplePeer({ initiator: false, trickle: false });
+        function gotMedia(stream) {
+          p = new SimplePeer({ initiator: false, stream: stream, trickle: false });
 
-        p.on('error', function (err) { console.log('error', err) });
+          p.on('error', function (err) { console.log('error', err) });
 
-        p.on('signal', function (data) {
-            console.log('SIGNAL', JSON.stringify(data));
-            document.querySelector('#outgoing').textContent = JSON.stringify(data);
-            socket.emit('acceptcall', { inituser: gCallername, recvuser: gUsername, sigstr: JSON.stringify(data) });
-        });
+          p.on('signal', function (data) {
+              console.log('SIGNAL', JSON.stringify(data));
+              document.querySelector('#outgoing').textContent = JSON.stringify(data);
+              socket.emit('acceptcall', { inituser: gCallername, recvuser: gUsername, sigstr: JSON.stringify(data) });
+          });
+          
+          //p.on('connect', function () {
+          //    console.log('CONNECT');
+          //    p.send('whatever' + Math.random());
+          //});
 
-        
+          //p.on('data', function (data) {
+          //    console.log('data: ' + data);
+          //});
 
-        //p.on('connect', function () {
-        //    console.log('CONNECT');
-        //    p.send('whatever' + Math.random());
-        //});
-
-        //p.on('data', function (data) {
-        //    console.log('data: ' + data);
-        //});
-
-        p.on('stream', function (stream) {
-            // got remote video stream, now let's show it in a video tag
-            var video = document.querySelector('#myvideo')
-            video.src = window.URL.createObjectURL(stream)
-            video.play()
-        })
+          p.on('stream', function (stream) {
+              // got remote video stream, now let's show it in a video tag
+              var video = document.querySelector('#myvideo')
+              video.src = window.URL.createObjectURL(stream)
+              video.play()
+          })
+        }
 
         
     </script>
@@ -119,16 +130,16 @@
     </button>
     <div id="userlist">           
     </div>
-  
+  <!--  
     <form id="myform">
         <textarea id="incoming"></textarea>
         <button type="submit">submit</button>
     </form>
+  -->
     <pre id="outgoing"></pre>
     <!--<script src="bundle.js"></script>-->
 
-    <video id="myvideo" width="320" height="240" controls>
-        
+    <video id="myvideo" width="320" height="240" controls>      
     </video>
 </body>
 
