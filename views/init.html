@@ -1,0 +1,89 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="simplepeer.min.js"></script>
+    <script src="https://cdn-orig.socket.io/socket.io-1.3.7.js"></script>
+    <script type="text/javascript">
+        ////////// socket code/////////////////////
+      /*
+        var connectionOptions =  {
+            "force new connection" : true,
+            "reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
+            "timeout" : 10000, //before connect_error and connect_timeout are emitted.
+            "transports" : ["websocket"]
+        };
+        var socket = io('https://glitch.com/edit/#!/cpinheir-webrtc-connsrv:3000/websocket', connectionOptions);  
+        */
+        var socket = io();
+      
+      
+        ///////// webrtc via SimplePeer code/////////////////////
+        //var p = new SimplePeer({ initiator: true, stream: stream, trickle: false });
+
+        function doinit() {                    
+            alert(document.getElementById("myform").innerHTML);
+
+            
+        }
+
+        // get video/voice stream            
+        navigator.getUserMedia = ( navigator.getUserMedia ||
+                                   navigator.webkitGetUserMedia ||
+                                   navigator.mozGetUserMedia ||
+                                   navigator.msGetUserMedia
+                                 );      
+        if (navigator.getUserMedia) {
+          navigator.getUserMedia({ video: true, audio: true }, gotMedia, function () { })
+        } else {
+           console.log("getUserMedia not supported");
+           alert("getUserMedia not supported");
+        }
+
+        function gotMedia(stream) {
+            var p = new SimplePeer({ initiator: true, stream: stream, trickle: false });
+
+            document.getElementById("myform").addEventListener('submit', function (ev) {
+                //event("got here");
+                ev.preventDefault();
+                p.signal(JSON.parse(document.querySelector('#incoming').value));
+            });
+
+            p.on('error', function (err) { console.log('error', err) });
+
+            p.on('signal', function (data) {
+                console.log('SIGNAL', JSON.stringify(data));
+                document.querySelector('#outgoing').textContent = JSON.stringify(data);
+            });
+
+
+
+            //p.on('connect', function () {
+            //    console.log('CONNECT');
+            //    p.send('whatever' + Math.random());
+            //});
+
+            //p.on('data', function (data) {
+            //    console.log('data: ' + data);
+            //});
+        }
+
+
+    </script>
+</head>
+
+<body onload="doinit();">
+    <style>
+        #outgoing {
+            width: 600px;
+            word-wrap: break-word;
+        }
+    </style>
+    <form id="myform">
+        <textarea id="incoming"></textarea>
+        <button type="submit">submit</button>
+    </form>
+    <pre id="outgoing"></pre>
+    <!--<script src="bundle.js"></script>-->
+</body>
+
+</html>
