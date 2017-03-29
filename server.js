@@ -4,7 +4,8 @@ var http = require('http').Server(app);
 var socketIo = require('socket.io');
 var io = socketIo(http);
 
-var stocksArr = [];
+var userArr = [];
+var userObj = { username:"", ip:"", port:"" };
 
 var port = process.env.PORT || 3000;
 http.listen(port, function () {
@@ -26,23 +27,6 @@ app.get('/recv', function (req, res) {
   res.sendFile(__dirname + '/views/recv.html');
 });
 
-function addStock(symbol) {
-  // only add if stock is not already in list.
-  if (!stocksArr.includes(symbol))
-  { 
-    stocksArr.push(symbol);
-    io.sockets.emit('newstock', { symbol: symbol });  // let all clients know
-  }
-}
-
-function delStock(symbol) {
-  for(var i = 0; i < stocksArr.length; i++) { 
-    if (stocksArr[i] === symbol) {
-      stocksArr.splice(i, 1);
-      io.sockets.emit('delstock', { symbol: symbol });  // let all clients know
-    }
-  }
-}
 
 //Allow Cross Domain Requests
 //io.set('transports', [ 'websocket' ]);
@@ -59,20 +43,34 @@ function delStock(symbol) {
 io.on('connection', function (socket) {
   //io.sockets.emit('broadcast message', { broadcast: 'msg' });
   console.log("CLIENT CONNECTED");
+  console.log('New connection from ' + socket.request.connection.remoteAddress + ':' + socket.request.connection.remotePort);
   
-  socket.emit('allstocks', { stocks: stocksArr });
+  //socket.emit('allusers', { users: userArr });
     
-  socket.on('newstock', function (data) {
-    addStock(data.symbol);
-    console.log("stocksArr=" + stocksArr);
+  socket.on('register', function (data) {
+    userArr.push({ username: data.username, ip:socket.request.connection.remoteAddress, port:socket.request.connection.remotePort });
+    io.sockets.emit('allusers', { users: userArr });
   });
   
-  socket.on('delstock', function (data) {
-    delStock(data.symbol);
-    console.log("stocksArr=" + stocksArr);
+  socket.on('initcall', function (data) { 
+    //broadcast init sigstring, because not sure how to send to a specific client. only specific recv user will act on it.
+    io.sockets.emit('initsigstr', { inituser: data.inituser, recvuser: data.recvuser, sigstr: data.sigstr });
+  });
+  
+  socket.on('acceptcall', function (data) { 
+    //broadcast recv sigstring, because not sure how to send to a specific client. only specific init user will act on it.
+    io.sockets.emit('recvsigstr', { inituser: data.inituser, recvuser: data.recvuser, sigstr: data.sigstr });
+  });
+  
+  socket.on('disconnect', function () {
+    console.log("CLIENT DISCONNECTED");
+    console.log('New connection from ' + socket.request.connection.remoteAddress + ':' + socket.request.connection.remotePort);
   });
   
 });
+
+//
+
 
 // listen for requests :)
 //app.listen(8080);

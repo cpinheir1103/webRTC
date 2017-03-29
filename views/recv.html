@@ -1,11 +1,67 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://code.jquery.com/jquery-2.2.1.min.js"
+            integrity="sha256-gvQgAFzTH6trSrAWoH1iPo9Xc96QxSZ3feW6kem+O00="
+            crossorigin="anonymous"></script>
     <script src="simplepeer.min.js"></script>
+    <script src="https://cdn-orig.socket.io/socket.io-1.3.7.js"></script>
     <script type="text/javascript">
-     
+        ////////// socket code/////////////////////
+        /*
+        var connectionOptions =  {
+            "force new connection" : true,
+            "reconnectionAttempts": "Infinity", //avoid having user reconnect manually in order to prevent dead clients after a server restart
+            "timeout" : 10000, //before connect_error and connect_timeout are emitted.
+            "transports" : ["websocket"]
+        };
+        var socket = io('https://glitch.com/edit/#!/cpinheir-webrtc-connsrv:3000/websocket', connectionOptions);  
+        */
+        var gUsername;
+        var gCallername;
+        var socket = io();
+       
+        function register() {
+          gUsername = $("#username").val();
+          socket.emit('register', { username: $("#username").val() });
+        }
+      
+        // server sends list of all stocks on client connect. 
+        socket.on('allusers', function (data) {
+          console.log(data);
+          var str = "";
+          $("#userlist").html(str);
+          for (var i=0; i<data.users.length; i++) {
+            var uname = data.users[i].username;
+            str = '<br/><button id="cb' + uname + '" class="callbtn" > CALL ' + uname + '</button>';
+            $("#userlist").append(str);             
+            $("#cb" + uname).click(function() {
+                                      var recvuser = ($(this).attr('id')).slice(2);  // remove first two chars ('cb')
+                                      socket.emit('initcall', { inituser: gUsername, recvuser: recvuser, sigstr: $("#outgoing").text() }); 
+                                    }
+                                  );
+          }
+          //$("#userlist").html(str);        
+            
+        });
+      
+        
+        socket.on('initsigstr', function (data) {
+          console.log("in initsigstr");
+          console.log("gUsername =" + gUsername);
+          console.log("data.recvuser =" + data.recvuser);
+          // only act on this if this is the user it was meant for.
+          if (gUsername === data.recvuser) { 
+            console.log("acting on initsigstr");
+            gCallername = data.inituser;
+            p.signal(JSON.parse(data.sigstr));
+          }          
+        });
+      
+        ///////////// webRTC code ////////////////////////////
         function doinit() {          
-            alert(document.getElementById("myform").innerHTML);
+            //alert(document.getElementById("myform").innerHTML);
 
             document.getElementById("myform").addEventListener('submit', function (ev) {
                 //event("got here");
@@ -24,6 +80,7 @@
         p.on('signal', function (data) {
             console.log('SIGNAL', JSON.stringify(data));
             document.querySelector('#outgoing').textContent = JSON.stringify(data);
+            socket.emit('acceptcall', { inituser: gCallername, recvuser: gUsername, sigstr: JSON.stringify(data) });
         });
 
         
@@ -44,7 +101,7 @@
             video.play()
         })
 
-
+        
     </script>
 </head>
 
@@ -55,6 +112,14 @@
             word-wrap: break-word;
         }
     </style>
+  
+    <input type="text" id="username" placeholder="Username"/>
+    <button onclick="register()">
+      Register
+    </button>
+    <div id="userlist">           
+    </div>
+  
     <form id="myform">
         <textarea id="incoming"></textarea>
         <button type="submit">submit</button>
