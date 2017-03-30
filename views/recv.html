@@ -1,5 +1,6 @@
 <html>
 <head>
+    <title>WebRTC Chat Recv</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/style.css">
     <script src="https://code.jquery.com/jquery-2.2.1.min.js"
@@ -64,11 +65,11 @@
         function doinit() {          
             //alert(document.getElementById("myform").innerHTML);
 
-            document.getElementById("myform").addEventListener('submit', function (ev) {
-                //event("got here");
-                ev.preventDefault();
-                p.signal(JSON.parse(document.querySelector('#incoming').value));
-            });
+            //document.getElementById("myform").addEventListener('submit', function (ev) {
+            //    //event("got here");
+            //    ev.preventDefault();
+            //    p.signal(JSON.parse(document.querySelector('#incoming').value));
+            //});
         }
 
        // get video/voice stream            

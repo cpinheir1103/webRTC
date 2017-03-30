@@ -38,6 +38,16 @@ app.get('/recv', function (req, res) {
 //  next();
 // });
 
+function removeUser (ip, port) {
+  for (var i=0; i<userArr.length; i++) {
+    console.log('userArr[' + i + ']= ' + userArr[i].username + ':' + userArr[i].ip  + ':' + userArr[i].port);
+    if ((userArr[i].ip === ip) && (userArr[i].port === port)) {
+      userArr.splice(i, 1);
+      return;
+    }
+  }
+}
+
 //io.set('origins', 'https://cpinheir-webrtc-init.glitch.me/:*');
 
 io.on('connection', function (socket) {
@@ -48,6 +58,7 @@ io.on('connection', function (socket) {
   //socket.emit('allusers', { users: userArr });
     
   socket.on('register', function (data) {
+    console.log('Client registered from ' + socket.request.connection.remoteAddress + ':' + socket.request.connection.remotePort);
     userArr.push({ username: data.username, ip:socket.request.connection.remoteAddress, port:socket.request.connection.remotePort });
     io.sockets.emit('allusers', { users: userArr });
   });
@@ -64,12 +75,14 @@ io.on('connection', function (socket) {
   
   socket.on('disconnect', function () {
     console.log("CLIENT DISCONNECTED");
-    console.log('New connection from ' + socket.request.connection.remoteAddress + ':' + socket.request.connection.remotePort);
+    console.log('Client disconnection from ' + socket.request.connection.remoteAddress + ':' + socket.request.connection.remotePort);
+    removeUser(socket.request.connection.remoteAddress, socket.request.connection.remotePort);
+    io.sockets.emit('allusers', { users: userArr });
   });
   
 });
 
-////
+//
 
 
 // listen for requests :)
